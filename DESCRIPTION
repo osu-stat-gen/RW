@@ -1,0 +1,25 @@
+Package: RW
+Title: Impact of random walk (RWS) and random walk with start (RWR) on TADs
+Version: 0.1.0
+Authors@R: 
+    person("Yongqi", "Liu", , "yqliu0123@gmail.com", role = c("aut", "cre"))
+Description: This package contains the functions and data used to investigate the impact of random walk (RWS) and random walk with start (RWR) on Hi-C data quality, especially in terms of the detection of topologically associating domains (TADs).
+License: GPL-3
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Depends: 
+    R (>= 3.5), 
+    rlang 
+Imports:  
+    stats,  
+    rstatix, 
+    ggplot2 
+LazyData: true
+LazyDataCompression: xz
+Suggests: 
+    data.table, 
+    TopDom,
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
