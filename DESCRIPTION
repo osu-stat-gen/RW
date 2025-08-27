@@ -19,7 +19,10 @@ LazyData: true
 LazyDataCompression: xz
 Suggests: 
     data.table, 
+    HiCseg, 
     TopDom,
+    mclust, 
+    cowplot, 
     knitr,
     rmarkdown
 VignetteBuilder: knitr

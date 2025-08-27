@@ -22,7 +22,7 @@
 #' @details
 #' For better numerical behavior, ensure `normmatrix` is nonnegative, symmetric, and
 #' stochastic (`rowSums(normmatrix) == 1` within small tolerance). The
-#' iteration stops when `||Q_{t+1} - Q_t||_F < tol` or when `max_iter` is reached.
+#' iteration stops when \eqn{||Q_{t+1} - Q_{t}||_{F} < }`tol` or when `max_iter` is reached.
 #'
 #' @examples
 #' data(sim1.P.KR)

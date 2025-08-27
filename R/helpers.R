@@ -125,7 +125,7 @@ Get.Pvalue_star <- function (matrix.data, size, scale = 1){
     downs <- as.vector(TopDom:::Get.Downstream.Triangle(matrix.data, i = i, size = size))
 
     test.data <- data.frame(y=c(dia, ups, downs), x=factor(rep(c("dia","tri"), c(length(dia), length(ups)+length(downs)))))
-    coin.wil.test <- wilcox_test(y ~ x, data = test.data, exact=TRUE, alternative = "less", conf.int = FALSE)
+    coin.wil.test <- wilcox_test(y ~ x, data = test.data, exact=TRUE, alternative = "less")  # conf.int = FALSE
     pvalue[i] <- pvalue(coin.wil.test)
   }
   pvalue[is.na(pvalue)] <- 1

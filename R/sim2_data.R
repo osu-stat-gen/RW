@@ -1,7 +1,7 @@
 
-#' Simulated `E` data from Simulation Study 2
+#' Simulated \eqn{E} data from Simulation Study 2
 #'
-#' `E` is a simulated Hi-C data with `N=1000` bins and `k=20` TADs. The domain endpoints are saved as a vector called `sim2.true.bound.E`.
+#' \eqn{E} is a simulated Hi-C data with `N=1000` bins and `k=20` TADs. The domain endpoints are saved as a vector called `sim2.true.bound.E`.
 #'
 #' @format A symmetric square matrix with 20 diagonal blocks and many random background noise.
 #'
@@ -9,7 +9,7 @@
 "sim2.E"
 
 
-#' Knight-Ruiz (KR) normalized `E` data from Simulation Study 2
+#' Knight-Ruiz (KR) normalized \eqn{E} data from Simulation Study 2
 #'
 #' This data is obtained by performing KR-normalization on the `sim2.E` data.
 #'
@@ -19,7 +19,7 @@
 "sim2.E.KR"
 
 
-#' Domain boundary points of the `E` data from Simulation Study 2
+#' Domain boundary points of the \eqn{E} data from Simulation Study 2
 #'
 #' The `N=1000` bins in the `sim2.E` data are divided consecutively into `k=20` TADs. The 20 endpoints are listed here.
 #'

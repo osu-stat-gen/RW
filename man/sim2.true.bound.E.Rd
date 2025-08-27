@@ -3,7 +3,7 @@
 \docType{data}
 \name{sim2.true.bound.E}
 \alias{sim2.true.bound.E}
-\title{Domain boundary points of the \code{E} data from Simulation Study 2}
+\title{Domain boundary points of the \eqn{E} data from Simulation Study 2}
 \format{
 An integer vector marking the endpoints of the 20 TADs.
 }

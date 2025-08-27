@@ -3,7 +3,7 @@
 \docType{data}
 \name{sim1.P.obs}
 \alias{sim1.P.obs}
-\title{Simulated \code{P} data from Simulation Study 1}
+\title{Simulated \eqn{P} data from Simulation Study 1}
 \format{
 A symmetric square matrix with a clear 5-diagonal-block patterns and random background noise.
 }
@@ -14,6 +14,6 @@ https://github.com/osu-stat-gen/RWS-RWR
 sim1.P.obs
 }
 \description{
-\code{P} is a Hi-C data with \code{N=200} bins and \code{k=5} TADs. The domain sizes are specified as 50, 30, 20, 90, and 10, respectively.
+\eqn{P} is a Hi-C data with \code{N=200} bins and \code{k=5} TADs. The domain sizes are specified as 50, 30, 20, 90, and 10, respectively.
 }
 \keyword{datasets}

@@ -3,7 +3,7 @@
 \docType{data}
 \name{sim2.E}
 \alias{sim2.E}
-\title{Simulated \code{E} data from Simulation Study 2}
+\title{Simulated \eqn{E} data from Simulation Study 2}
 \format{
 A symmetric square matrix with 20 diagonal blocks and many random background noise.
 }
@@ -14,6 +14,6 @@ https://github.com/osu-stat-gen/RWS-RWR
 sim2.E
 }
 \description{
-\code{E} is a simulated Hi-C data with \code{N=1000} bins and \code{k=20} TADs. The domain endpoints are saved as a vector called \code{sim2.true.bound.E}.
+\eqn{E} is a simulated Hi-C data with \code{N=1000} bins and \code{k=20} TADs. The domain endpoints are saved as a vector called \code{sim2.true.bound.E}.
 }
 \keyword{datasets}

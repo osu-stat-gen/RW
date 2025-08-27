@@ -3,7 +3,7 @@
 \docType{data}
 \name{sim1.P.KR}
 \alias{sim1.P.KR}
-\title{Knight-Ruiz (KR) normalized \code{P} data from Simulation Study 1}
+\title{Knight-Ruiz (KR) normalized \eqn{P} data from Simulation Study 1}
 \format{
 A symmetric square matrix, with row sums (and column sums) all equal to 1.
 }

@@ -33,7 +33,7 @@ starting at one node with restart probability \eqn{\alpha}.
 \details{
 For better numerical behavior, ensure \code{normmatrix} is nonnegative, symmetric, and
 stochastic (\code{rowSums(normmatrix) == 1} within small tolerance). The
-iteration stops when \verb{||Q_\{t+1\} - Q_t||_F < tol} or when \code{max_iter} is reached.
+iteration stops when \eqn{||Q_{t+1} - Q_{t}||_{F} < }\code{tol} or when \code{max_iter} is reached.
 }
 \examples{
 data(sim1.P.KR)

@@ -76,13 +76,20 @@ hic_heatmap <- function(hic, trunc = FALSE, thres = 20, title = "",
           axis.text = element_blank(),
           axis.ticks = element_blank()) +
     labs(x = "", y = "", title = title) +
+    # theme(plot.title = element_text(hjust = 0.5),
+    #       legend.key.size = unit(1.5, "cm"),
+    #       legend.key.height = unit(1.5, "cm"),
+    #       legend.key.width = unit(0.8, "cm"),
+    #       legend.title = element_text(size = 14),
+    #       legend.text = element_text(size = 14),
+    #       plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "cm")) +
     theme(plot.title = element_text(hjust = 0.5),
-          legend.key.size = unit(1.5, "cm"),
-          legend.key.height = unit(1.5, "cm"),
-          legend.key.width = unit(0.8, "cm"),
-          legend.title = element_text(size = 14),
-          legend.text = element_text(size = 14),
-          plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "cm")) +
+          legend.key.size = unit(0.7, "cm"),
+          legend.key.height = unit(0.7, "cm"),
+          legend.key.width = unit(0.35, "cm"),
+          legend.title = element_text(size = 11),
+          legend.text = element_text(size = 10),
+          plot.margin = unit(c(0.3, 0.3, 0.3, 0.3), "cm")) +
     coord_equal()
 
   ## ---- add boundaries (optional) -----------------------------------------

@@ -3,7 +3,7 @@
 \docType{data}
 \name{sim2.E.KR}
 \alias{sim2.E.KR}
-\title{Knight-Ruiz (KR) normalized \code{E} data from Simulation Study 2}
+\title{Knight-Ruiz (KR) normalized \eqn{E} data from Simulation Study 2}
 \format{
 A symmetric square matrix, with row sums (and column sums) all equal to 1.
 }
