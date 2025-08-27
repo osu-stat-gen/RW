@@ -1,0 +1,219 @@
+---
+title: "RW Vignette"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{RW Vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+## Overview
+
+The goal of RW package is to investigate whether random-walk based methods --- random walk with limited number of steps (RWS) and random walk with restart (RWR) --- can improve Hi-C data quality, especially for the detection of Topologically Associating Domains (TADs). In this package, we introduced three simulation studies, along with two real datasets, to conduct the investigation at different sparsity levels and TAD clarity levels.
+
+
+## Installation
+
+You can install the RW package from GitHub:
+
+```{r setup, warning=FALSE, message=FALSE, results='hide'}
+# If not already installed:
+# install.packages("devtools")
+
+# library(devtools)
+# devtools::install_github("https://github.com/osu-stat-gen/RW")
+library(RW)
+```
+
+
+## Data Preparation: KR normalization 
+
+In order to perform random-walk based methods (RWS and RWR), we need to transform the Hi-C contact count matrix into a transition probability matrix (TPM). All elements in a TPM are non-negative (which is also true for a Hi-C count matrix), and each row of a TPM sums to 1. A straight-forward way to get a Hi-C based TPM is to simply divide each row of a Hi-C contact matrix by its row sum. However, it would ruin the symmetry of Hi-C data. Knight & Ruiz (2012) developed a matrix balancing algorithm (called KR normalization herein) that can turn a contact matrix (symmetric and all elements being non-negative) into a symmetric TPM. 
+
+```{r KR_normalization}
+# Hi-C contact count for long arm of chromosome 22 of a bulk hESC dataset
+data("hESC.bulk")
+# Perform KR normalization
+hESC.bulk.KR <- KRnorm2(hESC.bulk)
+
+print(dim(hESC.bulk.KR))  # same as the dimension of hESC.bulk, which is 857 by 857. 
+```
+
+
+## Perform RWS or RWR 
+
+Once we obtain the TPM based on Hi-C data, we can perform either random walk with limited number of steps (RWS) or random walk with restart (RWR). In our package, the two functions are called `RWS()` and `RWR()` respectively. 
+
+`RWS()` takes the TPM $P$ (say, a KR-normalized contact matrix) as the first argument, the number of steps $k$ as the second argument, and computes the $k$-step transition matrix $P^{k}$. 
+
+```{r RWS}
+# Perform RWS with 3 steps
+hESC.bulk.RWS3s <- RWS(hESC.bulk.KR, step=3)
+```
+
+`RWR()` calculates the limiting-state RWR matrix, given the TPM $P$ and restart probability $\alpha$. The computation is done through fixed-point iteration, which stops when the Frobenius norm of the difference between the last two iterations is less than a small tolerance `tol` or when `max_iter` is reached. 
+
+```{r RWR}
+# Perform RWR with alpha=0.1 
+hESC.bulk.RWR0.1 <- RWR(hESC.bulk.KR, alpha=0.1, max_iter=300, tol=1e-06) 
+```
+
+
+## TAD calling 
+
+As an example, we apply HiCseg to detect the TADs based on the observed contact count matrix and the RWS/RWR smoothed matrices. In the manuscript, we also applied CaTCH and TopDom for TAD detection, but since these two algorithms require writing and reading data files, example codes are given below and not run (please modify file path accordingly). 
+
+```{r HiCseg}
+##--------  HiCseg  --------##
+library(HiCseg)
+
+# For the count matrix, use Poisson distribution ("P") with extended block-diagonal model ("Dplus") 
+n <- nrow(hESC.bulk)
+Kmax=floor(n/2)
+seg.bulk <- HiCseg_linkC_R(n, Kmax, "P", hESC.bulk, "Dplus")
+hicseg.bound.bulk <- seg.bulk$t_hat[seg.bulk$t_hat>0]    
+# hicseg.bound.bulk is the desired domain boundary endpoints.
+```
+
+```{r CaTCH_TopDom, eval=FALSE, echo=TRUE}
+# This chunk of code is meant to be shown but not executed
+
+##--------  CaTCH  --------##
+library(CaTCH)
+
+# Prepare the data file # 
+contrived <- as.data.frame(matrix(NA, nrow=(n*(n+1)/2), ncol=4))
+contrived[,1] <- rep(1, (n*(n+1)/2))
+row.idx <- c()
+col.idx <- c()
+for(i in 1:n){
+  row.idx <- c(row.idx, 1:i)
+  col.idx <- c(col.idx, rep(i, i))
+}
+contrived[,2] <- row.idx
+contrived[,3] <- col.idx
+rm(row.idx, col.idx)
+contrived[,4] <- as.vector(hESC.bulk[upper.tri(hESC.bulk, diag = T)])
+fwrite(contrived, "C:/R/R-4.2.1/library/CaTCH/hESC.dat", sep = " ", col.names=F, row.names=F, quote=F)
+
+# TAD detection # 
+catch.bulk <- domain.call("C:/R/R-4.2.1/library/CaTCH/hESC.dat")
+catch.bound.bulk <- catch.bulk$clusters$end[(sum(catch.bulk$ncluster$ndomains[2:650])+1):
+                                              sum(catch.bulk$ncluster$ndomains[2:651])]
+if(catch.bound.bulk[length(catch.bound.bulk)] != n){
+  catch.bound.bulk <- c(catch.bound.bulk, n)   
+}
+# catch.bound.bulk is the desired domain boundary endpoints.
+
+
+
+##--------  TopDom  --------##
+library(TopDom)
+
+# Prepare the data file # 
+bulk.input <- data.frame(rep(paste0("chr", as.character(1)), n), (0:(n-1)*40000), (1:n)*40000, hESC.bulk)
+# 40000 (i.e., 40kb) is the data resolution 
+fwrite(bulk.input, file="bulk_TopDom.txt", col.names=FALSE, sep=" ")
+
+# TAD detection # 
+bulk_TopDom_data <- readHiC("bulk_TopDom.txt", binSize = 40000)
+tryCatch({bulk_TopDom <- TopDom_star(bulk_TopDom_data, window.size=5)
+  topdom.bound.bulk <- bulk_TopDom$domain[,"to.id"]},
+  error = function(c) "error"
+)
+if(exists("bulk_TopDom") == FALSE){
+  topdom.bound.bulk <- c(n)
+}
+# topdom.bound.bulk is the desired domain boundary endpoints. 
+# if TopDom_star() function gives an error, it means no smaller TAD is detected
+# and the only boundary endpoint is n, the last bin. 
+```
+
+
+Once the TAD boundaries are determined on the KR-normalized or RWS/RWR smoothed data, we can compare their similarity to the "truth" (in this case, TADs based on bulk data) and compute the Adjusted Rand Index (ARI) values. Here we still use HiCseg as an example.  
+
+```{r ARI}
+# TAD detection using HiCseg # 
+# For the normalized/smoothed data, use Gaussian distribution ("G") with extended block-diagonal model ("Dplus") 
+seg.norm.bulk <- HiCseg_linkC_R(n, Kmax, "G", hESC.bulk.KR, "Dplus")
+hicseg.bound.norm.bulk <- seg.norm.bulk$t_hat[seg.norm.bulk$t_hat>0]
+seg.RWS3s.bulk <- HiCseg_linkC_R(n, Kmax, "G", hESC.bulk.RWS3s, "Dplus")
+hicseg.bound.RWS3s.bulk <- seg.RWS3s.bulk$t_hat[seg.RWS3s.bulk$t_hat>0]
+seg.RWR0.1.bulk <- HiCseg_linkC_R(n, Kmax, "G", hESC.bulk.RWR0.1, "Dplus")
+hicseg.bound.RWR0.1.bulk <- seg.RWR0.1.bulk$t_hat[seg.RWR0.1.bulk$t_hat>0]
+
+
+# Calculate the Adjusted Rand Index (ARI) between the bulk and the smoothed data # 
+library(mclust)
+
+# Transform the domain boundary endpoints into a vector of length n indicating the TAD indices 
+hicseg.bulk.idx.vec <- rep(1:length(hicseg.bound.bulk), times=diff(c(0,hicseg.bound.bulk)))
+hicseg.norm.bulk.idx.vec <- rep(1:length(hicseg.bound.norm.bulk), times=diff(c(0,hicseg.bound.norm.bulk)))
+hicseg.RWS3s.bulk.idx.vec <- rep(1:length(hicseg.bound.RWS3s.bulk), times=diff(c(0,hicseg.bound.RWS3s.bulk)))
+hicseg.RWR0.1.bulk.idx.vec <- rep(1:length(hicseg.bound.RWR0.1.bulk), times=diff(c(0,hicseg.bound.RWR0.1.bulk)))
+
+# ARI between bulk and KR-normalized
+adjustedRandIndex(hicseg.bulk.idx.vec, hicseg.norm.bulk.idx.vec)
+# ARI between bulk and RWS 3 steps
+adjustedRandIndex(hicseg.bulk.idx.vec, hicseg.RWS3s.bulk.idx.vec)
+# ARI between bulk and RWR with alpha=0.1 
+adjustedRandIndex(hicseg.bulk.idx.vec, hicseg.RWR0.1.bulk.idx.vec)
+```
+
+
+## Heatmap visulization and TAD overlay
+
+The `hic_heatmap()` function allows heatmap visualization of a symmetric Hi-C data (count or normalized), with optional domain boundaries overlay. The following figure shows --- from left to right --- bulk, KR-normalized, RWS3s-smoothed, and RWR0.1-smoothed data, along with the TADs identified by HiCseg. 
+
+```{r Visualization, fig.width=7, fig.height=7}
+# For visualization 
+library(ggplot2)  
+library(cowplot)
+
+bulk.plot <- hic_heatmap(hESC.bulk, trunc=TRUE, thres=50, title="Bulk", 
+                         add.bound=TRUE, bound=hicseg.bound.bulk, col="blue")
+KR.plot <- hic_heatmap(hESC.bulk.KR, trunc=TRUE, thres=0.05, title="KR normalized", 
+                         add.bound=TRUE, bound=hicseg.bound.norm.bulk, col="blue")
+RWS3s.plot <- hic_heatmap(hESC.bulk.RWS3s, trunc=TRUE, thres=0.05, title="RWS3s", 
+                         add.bound=TRUE, bound=hicseg.bound.RWS3s.bulk, col="blue")
+RWR0.1.plot <- hic_heatmap(hESC.bulk.RWR0.1, trunc=TRUE, thres=0.05, title="RWR0.1", 
+                         add.bound=TRUE, bound=hicseg.bound.RWR0.1.bulk, col="blue")
+
+plot_grid(bulk.plot, KR.plot, RWS3s.plot, RWR0.1.plot, 
+          nrow=2, ncol=2, align="hv")
+```
+
+### Explanation of Parameters
+
+* `hic` is a symmetric square Hi-C matrix (non-negative), which is contact count or normalized/smoothed.
+* `trunc` is a logical value, indicating whether values larger than `thres` are clipped before plotting. Default `FALSE`.
+* `thres` is a positive number used when `trunc = TRUE` to cap large values. Default `20`.
+* `title` presents the plot title. Default empty string.
+* `add.bound` is a logical value, indicating whether to draw boundary line segments that mark TADs defined by `bound`. Default `FALSE`.
+* `bound` is an increasing integer vector of domain boundary positions (end indices of consecutive blocks). For example, if `nrow(hic) = 100`, and `bound = c(20, 55, 100)`, the diagonal blocks are (1,...,20), (21,...,55), (56,...,100). If `add.bound = TRUE`, `bound` must be supplied.
+* `col` is the color used for boundary lines. Default `"blue"`.
+
+
+## Hi-C data simulators 
+
+In this package, we also provide two Hi-C data simulators, corresponding to Simulation Study 2 and 3 of the manuscript. 
+
+* `sim_data_generator()` generates a simulated contact count matrix with (1) a distance-decay background count; (2) domain blocks with extra signal; (3) zero inflation inside and outside domains; and (4) negative-binomial overdispersion. 
+* `Subsample()` allows users to randomly subsample the total contacts from a Hi-C count matrix to generate a sparser data (mimicking single-cell data with various levels of sparsity). 
+
+For more information about these two functions, please see their help pages. 
+
+```{r Similators, eval=FALSE, echo=TRUE}
+?sim_data_generator
+?Subsample
+```
+
+
